@@ -75,6 +75,6 @@ and color ({RayDirection=rd; RayOrigin=ro; Skybox=skybox} as config) field =
 let frag ({RayDirection = rd} as config) scene (uv:vector2) = 
     let uv' = uv.*2. .- 1.
     let right = normalize ({X=0.;Y=1.;Z=0.} +++ rd)
-    let up = normalize (right +++ rd)
+    let up = normalize (rd +++ right)
     let rd = normalize (rd .+. right.*uv'.X .+. up.*uv'.Y)
     color {config with RayDirection=rd} scene
