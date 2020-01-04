@@ -13,7 +13,7 @@ module sceneObject =
         {Color=(fun _ -> color); Reflection=reflection; Roughness=roughness}
     let checkerBoard color1 color2 reflection roughness = 
         let f p = 
-            let sum = int (reduce (+) p)
+            let sum = int (p |> map round |> reduce (+))
             if sum % 2 = 0 then color1
             else                color2
         {Color=f; Reflection=reflection; Roughness=roughness}
