@@ -26,7 +26,7 @@ let inline (~-.) (u:'a when 'a :> vector) :'a = List.map (~-) u.Components |> ma
 let inline (.*.) (u:'a when 'a:>vector) (v:'a) :'a = List.map2 (*) u.Components v.Components |> make
 let inline (./.) (u:'a when 'a:>vector) (v:'a) :'a = List.map2 (/) u.Components v.Components |> make
 let inline ( *** ) u v = u .*. v |> components |> List.sum
-let inline (+++) ({X=x1;Y=y1;Z=z1}:vector3,{X=x2;Y=y2;Z=z2}:vector3) = {X=y1*z2-z1*y2; Y=z1*x2-x1*z2; Z=x1*y2-y1*x2}
+let inline (+++) ({X=x1;Y=y1;Z=z1}:vector3) ({X=x2;Y=y2;Z=z2}:vector3) = {X=y1*z2-z1*y2; Y=z1*x2-x1*z2; Z=x1*y2-y1*x2}
 let inline (.+) (u:'a) n :'a = u |> components |> List.map ((+) n) |> make
 let inline (+.) n u = u .+ n
 let inline (.-) u n = u .+ (-n)
