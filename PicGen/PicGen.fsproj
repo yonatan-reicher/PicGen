@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Vector.fs" />
+    <Compile Include="Canvas.fs" />
+    <Compile Include="Raymarching\Field.fs" />
+    <Compile Include="Raymarching\RayMarching.fs" />
+  </ItemGroup>
+
+</Project>
