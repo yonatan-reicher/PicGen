@@ -69,7 +69,7 @@ and color ({RayDirection=rd; RayOrigin=ro; Skybox=skybox} as config) field =
         let smooth = l'.*.color
         let rough = color ./ 2.
         let color' = lerp smooth rough roughness
-        color'
+        color' |> map (max 0.) |> map (min 1.)
     | Error _ -> skybox rd
     
 let frag ({RayDirection = rd} as config) scene (uv:vector2) = 
