@@ -35,33 +35,47 @@ type renderConfig =
 
 let raymarch ({RayOrigin=ro; RayDirection=rd; SurfaceDistance=surface; RayIterations=i; MaxRayDistance=maxDistance} as config:renderConfig) (scene:field<vector3,sceneObject>) = Field.raymarch ro rd surface i maxDistance scene
 
-let color ({Reflections=reflections
-            LightPosition=lightPos
-            Skybox=skybox
-            SampleDistance=sampleDistance
+let rec color ({Reflections=reflections;
+            LightPosition=lightPos;
+            Skybox=skybox;
+            SampleDistance=sampleDistance;
 
-            RayDirection=rd
-            RayOrigin=ro
-            SurfaceDistance=surface
-             } as config) field =
+            RayDirection=rd;
+            RayOrigin=ro;
+            SurfaceDistance=surface;
+            MaxRayDistance=maxDistance;
+            RayIterations=rayIterations;
+            } as config) field =
     match raymarch config field with
-    | Ok (distance,({Color=colorMap; Reflection=reflective; Roughness=roughness} as object),iterations) ->
+    | Ok (distance,{Color=colorMap; Reflection=reflective; Roughness=roughness},iterations) ->
         let p, normal =
             let p' = ro .+. distance*.rd
             let normal = Field.normal sampleDistance p' field
             p' .+. 2.*.normal.*surface, normal
-        let color = colorMap p
         let lightDir, lightDis =
             let u = lightPos .-. p
             let m = mag u
             u./m, m
-        let colorWithLight = 
-            let roughLight = (-.rd) *** normal
-            let smoothLight = (reflect normal rd) *** lightDir
-            let light = smoothLight*(1.-roughness) + roughLight*roughness   //  Lerps through smoothLight and roughLight by roughness
-            color.*light
-        colorWithLight
+        let reflectedDirection = reflect normal rd
+        let reflectedLight =
+            if reflections > 0 then 
+                color {config with RayOrigin=p; RayDirection=reflectedDirection; Reflections=reflections-1;RayIterations=rayIterations/2} field
+            else unit
+        let color = 
+            match raymarch {config with RayOrigin=p; RayDirection=lightDir; MaxRayDistance=min lightDis maxDistance} field with
+            | Error _ ->    //  Nothing was hit
+                let color = colorMap p
+                let colorWithLight = 
+                    let roughLight = (-.rd) *** normal
+                    let smoothLight = reflectedDirection *** lightDir
+                    let light = smoothLight*(1.-roughness) + roughLight*roughness   //  Lerps through smoothLight and roughLight by roughness
+                    color.*light
+                colorWithLight
+            | Ok _ -> zero
+        color .+. reflectedLight.*reflective
+        |> clamp 0. 1.
     | Error _ -> skybox rd
+
 let frag ({RayDirection = rd} as config) scene (uv:vector2) = 
     let uv' = uv.*2. .- 1.
     let right = normalize ({X=0.;Y=1.;Z=0.} +++ rd)
