@@ -74,4 +74,4 @@ module Vector =
         let normalize u = u ./ (mag u)
         let reflect (normal:'a when 'a :> vector) (reflect:'a) :'a = reflect .-. (2.*(reflect *** normal))*.normal
         let lerp (a:'a when 'a :> vector) (b:'a) t :'a = a.*(1.-t) .+. b.*t
-        let clamp minValue maxValue vector = vector |> max minValue |> min maxValue
+        let clamp minValue maxValue (vector:#vector) = vector |> map (max minValue) |> map (min maxValue)
