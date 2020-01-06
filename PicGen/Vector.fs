@@ -22,7 +22,7 @@ type vector4 =
         
 let inline (.+.) (u:'a when 'a:>vector) (v:'a) :'a = List.map2 (+) u.Components v.Components |> make
 let inline (.-.) (u:'a when 'a:>vector) (v:'a) :'a = List.map2 (-) u.Components v.Components |> make
-let inline (~-.) (u:'a when 'a :> vector) :'a = List.map (~-) u.Components |> make
+let inline (~-.) (u:'a when 'a:>vector) :'a = List.map (~-) u.Components |> make
 let inline (.*.) (u:'a when 'a:>vector) (v:'a) :'a = List.map2 (*) u.Components v.Components |> make
 let inline (./.) (u:'a when 'a:>vector) (v:'a) :'a = List.map2 (/) u.Components v.Components |> make
 let inline ( *** ) u v = u .*. v |> components |> List.sum
@@ -74,3 +74,4 @@ module Vector =
         let normalize u = u ./ (mag u)
         let reflect (normal:'a when 'a :> vector) (reflect:'a) :'a = reflect .-. (2.*(reflect *** normal))*.normal
         let lerp (a:'a when 'a :> vector) (b:'a) t :'a = a.*(1.-t) .+. b.*t
+        let clamp minValue maxValue vector = vector |> max minValue |> min maxValue
