@@ -81,9 +81,20 @@ let rec color ({Reflections=reflections;
         |> fun c -> (c .+. ambienteLight).*lightScaler
     | Error _ -> skybox rd
 
-let frag ({RayDirection = rd} as config) scene (uv:vector2) = 
+let frag ({RayDirection = rd} as config) scene (width:int) (height:int) (uv:vector2) = 
     let uv' = uv.*2. .- 1.
     let right = normalize ({X=0.;Y=1.;Z=0.} +++ rd)
     let up = normalize (rd +++ right)
     let rd = normalize (rd .+. right.*uv'.X .+. up.*uv'.Y)
     color {config with RayDirection=rd} scene
+
+let fragAntialiasing (samplesPerPixelSqrt:int) config scene (width:int) (height:int) (uv:vector2) =
+    let delta = 1./(float samplesPerPixelSqrt) /. {X=float width; Y=float height}
+    
+    let samples =
+        [for y in 0..samplesPerPixelSqrt-1 ->
+            [for x in 0..samplesPerPixelSqrt-1 ->
+                let uv' = delta./2.0 .+. delta.*.{X=float x; Y=float y} .+. uv .-. 0.5/.{X=float width; Y=float height}
+                frag config scene width height uv']]
+        |> List.collect id
+    (List.reduce (.+.) samples) ./ (float samples.Length)
