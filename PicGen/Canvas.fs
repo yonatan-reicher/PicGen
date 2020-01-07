@@ -20,7 +20,7 @@ module Canvas =
         }
     let fragmentNormalized width height f = 
         let div = max width height |> float
-        fragment width height (fun x y -> f {X=float x / div; Y=float y / div})
+        fragment width height (fun x y -> f width height {X=float x / div; Y=float y / div})
     let empty width height = fragment width height (fun _ _ -> zero)
     let set x y value (Canvas a) = a.[y].[x] <- value
     let get x y (Canvas a) = a.[y].[x]
