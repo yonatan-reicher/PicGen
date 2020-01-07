@@ -61,22 +61,20 @@ let rec color ({Reflections=reflections;
             let m = mag u
             u./m, m
         let reflectedDirection = reflect normal rd
-        let objectColor = 
+        let objectColor = colorMap p
+        let objectFinalColor = 
             match raymarch {config with RayOrigin=p; RayDirection=lightDir; MaxRayDistance=min lightDis maxDistance} field with
             | Error _ ->    //  Nothing was hit
-                let color = colorMap p
-                let colorWithLight = 
-                    let roughLight = (-.rd) *** normal
-                    let smoothLight = reflectedDirection *** lightDir
-                    let light = smoothLight*(1.-roughness) + roughLight*roughness   //  Lerps through smoothLight and roughLight by roughness
-                    color.*light
-                colorWithLight
+                let roughLight = (-.rd) *** normal
+                let smoothLight = reflectedDirection *** lightDir
+                let light = smoothLight*(1.-roughness) + roughLight*roughness   //  Lerps through smoothLight and roughLight by roughness
+                clamp 0. 1. (objectColor.*light)
             | Ok _ -> zero
         if reflections > 0 then 
             let reflectedLight =
                 color {config with RayOrigin=p; RayDirection=reflectedDirection; Reflections=reflections-1;RayIterations=rayIterations/2} field
-            objectColor .+. reflectedLight.*reflective
-        else objectColor
+            objectFinalColor .+. (reflectedLight.*reflective .*. objectColor)
+        else objectFinalColor
         |> clamp 0. 1.
         |> fun c -> (c .+. ambienteLight).*lightScaler
     | Error _ -> skybox rd
