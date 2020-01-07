@@ -26,6 +26,8 @@ type renderConfig =
         LightPosition:vector3
         Skybox:vector3->color
         SampleDistance:float
+        LightScaler:float
+        AmbienteLight:color
         //  RayMarching
         RayIterations:int
         RayDirection:vector3
@@ -39,6 +41,8 @@ let rec color ({Reflections=reflections;
             LightPosition=lightPos;
             Skybox=skybox;
             SampleDistance=sampleDistance;
+            LightScaler=lightScaler;
+            AmbienteLight=ambienteLight;
 
             RayDirection=rd;
             RayOrigin=ro;
@@ -57,11 +61,7 @@ let rec color ({Reflections=reflections;
             let m = mag u
             u./m, m
         let reflectedDirection = reflect normal rd
-        let reflectedLight =
-            if reflections > 0 then 
-                color {config with RayOrigin=p; RayDirection=reflectedDirection; Reflections=reflections-1;RayIterations=rayIterations/2} field
-            else unit
-        let color = 
+        let objectColor = 
             match raymarch {config with RayOrigin=p; RayDirection=lightDir; MaxRayDistance=min lightDis maxDistance} field with
             | Error _ ->    //  Nothing was hit
                 let color = colorMap p
@@ -72,8 +72,13 @@ let rec color ({Reflections=reflections;
                     color.*light
                 colorWithLight
             | Ok _ -> zero
-        color .+. reflectedLight.*reflective
+        if reflections > 0 then 
+            let reflectedLight =
+                color {config with RayOrigin=p; RayDirection=reflectedDirection; Reflections=reflections-1;RayIterations=rayIterations/2} field
+            objectColor .+. reflectedLight.*reflective
+        else objectColor
         |> clamp 0. 1.
+        |> fun c -> (c .+. ambienteLight).*lightScaler
     | Error _ -> skybox rd
 
 let frag ({RayDirection = rd} as config) scene (uv:vector2) = 
