@@ -7,16 +7,17 @@ open Vector
 type [<ReferenceEquality>] sceneObject =
     {   Color:vector3->color
         Reflection:float
-        Roughness:float }
+        Roughness:float
+        Metalicness:float }
 module sceneObject =
-    let singleColor color reflection roughness = 
-        {Color=(fun _ -> color); Reflection=reflection; Roughness=roughness}
-    let checkerBoard color1 color2 reflection roughness = 
+    let singleColor color reflection roughness metalicness = 
+        {Color=(fun _ -> color); Reflection=reflection; Roughness=roughness; Metalicness=metalicness}
+    let checkerBoard color1 color2 reflection roughness metalicness = 
         let f p = 
             let sum = int (p |> map round |> reduce (+))
             if sum % 2 = 0 then color1
             else                color2
-        {Color=f; Reflection=reflection; Roughness=roughness}
+        {Color=f; Reflection=reflection; Roughness=roughness; Metalicness=metalicness}
 
 type field3d = field<vector3,sceneObject>
 
@@ -51,7 +52,7 @@ let rec color ({Reflections=reflections;
             RayIterations=rayIterations;
             } as config) field =
     match raymarch config field with
-    | Ok (distance,{Color=colorMap; Reflection=reflective; Roughness=roughness},iterations) ->
+    | Ok (distance,{Color=colorMap; Reflection=reflective; Roughness=roughness; Metalicness=metalicness},iterations) ->
         let p, normal =
             let p' = ro .+. distance*.rd
             let normal = Field.normal sampleDistance p' field
@@ -73,7 +74,7 @@ let rec color ({Reflections=reflections;
         if reflections > 0 then 
             let reflectedLight =
                 color {config with RayOrigin=p; RayDirection=reflectedDirection; Reflections=reflections-1;RayIterations=rayIterations/2} field
-            objectFinalColor .+. (reflectedLight.*reflective .*. objectColor)
+            objectFinalColor .+. (reflectedLight.*reflective .*. (lerp objectColor unit metalicness))
         else objectFinalColor
         |> clamp 0. 1.
         |> fun c -> (c .+. ambienteLight).*lightScaler
